@@ -1,0 +1,138 @@
+%macro READ 2
+    mov rax,0
+    mov rdi,0
+    mov rsi,%1
+    mov rdx,%2
+    syscall
+%endmacro
+
+%macro WRITE 2
+    mov rax,1
+    mov rdi,1
+    mov rsi,%1
+    mov rdx,%2
+    syscall
+%endmacro
+
+
+section .data
+
+msg3 db "Enter the HEX number",10
+len3 equ $-msg3
+
+msg4 db "The BCD equivalent is : "
+len4 equ $-msg4
+
+
+section .bss
+
+char_buff resb 17
+len resq 1
+char resb 1
+cnt resb 1
+
+
+section .text
+
+global _start
+
+_start:
+
+    WRITE msg3,len3
+
+    READ char_buff,17
+
+    dec rax
+    mov [len],rax
+
+    mov rcx,[len]
+
+    call accept
+
+    mov rax,rbx
+
+    mov rcx,00
+
+
+l1:
+    mov rdx,00
+
+    mov rbx,0AH
+
+    div rbx
+
+    push rdx
+
+    inc rcx
+
+    cmp rax,00
+    jnz l1
+
+    mov byte[cnt],cl
+
+    WRITE msg4,len4
+
+
+l2:
+    pop rbx
+
+    cmp bl,09H
+    jbe l3
+
+    add bl,07H
+
+l3:
+    add bl,30H
+
+    mov byte[char],bl
+
+    WRITE char,1
+
+    dec byte[cnt]
+
+    jnz l2
+
+
+exit:
+    mov rax,60
+    mov rdi,0
+    syscall
+
+
+; -----------------------------
+; HEX STRING TO NUMBER
+; -----------------------------
+
+accept:
+
+    mov rsi,char_buff
+
+    mov rbx,00H
+
+
+up:
+    mov rdx,00H
+
+    mov dl,byte[rsi]
+
+    cmp dl,39H
+
+    jbe sub30
+
+    sub dl,07H
+
+
+sub30:
+    sub dl,30H
+
+    shl rbx,04H
+
+    add rbx,rdx
+
+    inc rsi
+
+    dec rcx
+
+    jnz up
+
+    ret
