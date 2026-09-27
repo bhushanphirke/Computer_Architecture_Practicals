@@ -1,0 +1,173 @@
+section .data
+
+msg1 db "Enter the multiplicant",10
+msg1_len equ $-msg1
+
+msg2 db "Enter the multiplier",10
+msg2_len equ $-msg2
+
+msg3 db "Multiplication Result ::",10
+msg3_len equ $-msg3
+
+%macro write 2
+    mov rax,1
+    mov rdi,1
+    mov rsi,%1
+    mov rdx,%2
+    syscall
+%endmacro
+
+%macro read 2
+    mov rax,0
+    mov rdi,0
+    mov rsi,%1
+    mov rdx,%2
+    syscall
+%endmacro
+
+section .bss
+
+num  resb 17
+buff resb 16
+
+no1  resq 1
+no2  resq 1
+
+section .text
+global _start
+
+_start:
+
+    write msg1,msg1_len
+    call accept
+    mov qword [no1],rbx
+
+    write msg2,msg2_len
+    call accept
+    mov qword [no2],rbx
+
+    ; Add and Shift multiplication
+
+    mov rax,0              
+    mov rbx,qword [no1]   
+    mov rcx,qword [no2]    
+    mov rdx,64             
+
+multiply:
+
+    test rcx,1           
+    jz shift
+
+    add rax,rbx            
+
+shift:
+
+    shl rbx,1              
+    shr rcx,1             
+
+    dec rdx
+    jnz multiply
+
+    mov rbx,rax
+
+    write msg3,msg3_len
+    call disp
+
+    mov rax,60
+    mov rdi,0
+    syscall
+
+
+accept:
+
+    xor rbx,rbx
+
+.read_next:
+
+    read num,1
+
+    test rax,rax
+    jle .done
+
+    movzx rdx,byte [num]
+
+    cmp dl,10
+    je .done
+
+    cmp dl,13
+    je .done
+
+    cmp dl,'0'
+    jb .read_next
+
+    cmp dl,'9'
+    jbe .decimal
+
+    cmp dl,'A'
+    jb .check_lower
+
+    cmp dl,'F'
+    jbe .upper
+
+.check_lower:
+
+    cmp dl,'a'
+    jb .read_next
+
+    cmp dl,'f'
+    ja .read_next
+
+    sub dl,'a'-10
+    jmp .add_digit
+
+.upper:
+
+    sub dl,'A'-10
+    jmp .add_digit
+
+.decimal:
+
+    sub dl,'0'
+
+.add_digit:
+
+    shl rbx,4
+    add rbx,rdx
+
+    jmp .read_next
+
+.done:
+    ret
+
+
+disp:
+
+    mov rsi,buff
+    mov rcx,16
+    mov rdx,0
+
+up2:
+
+    rol rbx,4
+
+    mov dl,bl
+    and dl,0fh
+
+    cmp dl,09
+    jbe mc
+
+    add dl,07h
+
+mc:
+
+    add dl,30h
+    mov [rsi],dl
+
+    inc rsi
+    dec rcx
+
+    jnz up2
+
+    write buff,16
+
+    ret
