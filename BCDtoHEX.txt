@@ -1,0 +1,94 @@
+%macro READ 2
+    mov rax, 0
+    mov rdi, 0
+    mov rsi, %1
+    mov rdx, %2
+    syscall
+%endmacro
+
+%macro WRITE 2
+    mov rax, 1
+    mov rdi, 1
+    mov rsi, %1
+    mov rdx, %2
+    syscall
+%endmacro
+
+section .data
+
+msg1 db "Enter BCD number: "
+len1 equ $-msg1
+
+msg2 db "Hex equivalent: "
+len2 equ $-msg2
+
+section .bss
+
+num resb 17
+ans resq 1
+output resb 16
+
+section .text
+global _start
+
+_start:
+
+    WRITE msg1, len1
+    READ num, 17
+
+    dec rax
+    mov rcx, rax
+
+    mov rbx, 0
+    mov rsi, num
+
+; BCD to HEX
+convert:
+    mov rax, 10
+    mul rbx
+
+    mov rbx, rax
+
+    mov rdx, 0
+    mov dl, [rsi]
+    sub dl, '0'
+
+    add rbx, rdx
+
+    inc rsi
+    dec rcx
+    jnz convert
+
+    mov [ans], rbx
+
+    WRITE msg2, len2
+
+; Display hexadecimal
+    mov rbx, [ans]
+    mov rsi, output
+    mov rcx, 16
+
+display:
+    rol rbx, 4
+
+    mov dl, bl
+    and dl, 0FH
+
+    cmp dl, 9
+    jbe digit
+
+    add dl, 7
+
+digit:
+    add dl, '0'
+    mov [rsi], dl
+
+    inc rsi
+    dec rcx
+    jnz display
+
+    WRITE output, 16
+
+    mov rax, 60
+    mov rdi, 0
+    syscall
