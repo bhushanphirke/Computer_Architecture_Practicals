@@ -1,0 +1,132 @@
+section .data
+msg  db"1..Mutiplication  using Successive Addition ",10
+msg_len equ $-msg
+msg1 db "Enter the mutiplicant",10
+msg1_len equ $-msg1
+msg2 db "Enter the mutiplier",10
+msg2_len equ $-msg2
+msg3 db "Multiplication Result/product ::",10
+msg3_len equ $-msg3
+msg_space  db "  ",10
+msg_space_len equ $-msg_space
+
+%macro write 2
+mov rax,1
+mov rdi,1
+mov rsi,%1
+mov rdx,%2
+syscall
+%endmacro
+
+%macro read 2
+mov rax,0
+mov rdi,0
+mov rsi,%1
+mov rdx,%2
+syscall
+%endmacro
+
+section .bss
+num resb 17
+choice resb 2
+buff resb 16
+no resq 1
+ccnt resq 1
+no1 resq 1
+no2 resq 1
+A resq 1
+B resq 1
+Q resq 1 
+n resq 1
+
+section .text
+global _start
+_start:
+
+write msg1,msg1_len
+call accept
+mov qword[no1],rbx
+
+write msg2,msg2_len
+call accept
+mov qword[no2],rbx
+
+xor rbx,rbx
+cmp qword[no2],0
+je product_ready
+
+l1:
+add rbx,qword[no1]
+dec qword[no2]
+jnz l1
+
+product_ready:
+write msg3,msg3_len
+call disp
+
+finished:
+mov rax,60
+xor rdi,rdi
+syscall
+
+accept:
+xor rbx,rbx
+.read_char:
+mov eax,0
+xor edi,edi
+mov rsi,num
+mov edx,1
+syscall
+test rax,rax
+jle .done
+movzx edx,byte [num]
+cmp dl,10
+je .done
+cmp dl,13
+je .read_char
+cmp dl,'0'
+jb .read_char
+cmp dl,'9'
+jbe .numeric
+cmp dl,'A'
+jb .lowercase
+cmp dl,'F'
+jbe .uppercase
+.lowercase:
+cmp dl,'a'
+jb .read_char
+cmp dl,'f'
+ja .read_char
+sub dl,'a'-10
+jmp .add_digit
+.uppercase:
+sub dl,'A'-10
+jmp .add_digit
+.numeric:
+sub dl,'0'
+.add_digit:
+shl rbx,4
+movzx rdx,dl
+add rbx,rdx
+jmp .read_char
+.done:
+ret
+disp:
+ mov rsi,buff
+mov rcx,16
+mov rdx,0
+up2:
+    rol rbx,4
+    mov dl,bl
+    and dl,0fh
+    cmp dl,09h
+    jbe mc
+    add dl,07h
+mc:
+    add dl,30h
+    mov byte[rsi],dl
+    inc rsi
+    dec rcx
+    jnz up2
+    write buff,16
+    ret
