@@ -1,0 +1,63 @@
+section .data
+msg db "Enter first number",10     
+len equ $-msg                      
+msg1 db "Enter second number",10
+len1 equ $-msg1                   
+msg2 db "The sum is",10
+len2 equ $-msg2
+
+section .bss
+num1 resb 2 
+num2 resb 2 
+sum resb 2       
+
+section .text
+global _start
+_start:
+mov rax,1        
+mov rdi,1 
+mov rsi,msg
+mov rdx,len 
+syscall
+
+mov rax,0	
+mov rdi,0 
+mov rsi,num1
+mov rdx,2
+syscall
+
+mov rax,1        
+mov rdi,1
+mov rsi,msg1
+mov rdx,len1
+syscall
+
+mov rax,0        
+mov rdi,0
+mov rsi,num2
+mov rdx,2 ;size of num2
+syscall
+mov rax,[num1]  
+sub rax,30h  
+mov rbx,[num2] 
+sub rbx,30h 
+
+add rax,rbx  
+add rax,30h
+mov [sum],rax 
+
+mov rax,1      
+mov rdi,1
+mov rsi,msg2
+mov rdx,len2
+syscall
+
+mov rax,1   
+mov rdi,1
+mov rsi,sum
+mov rdx,2
+syscall
+
+mov rax,60 
+mov rdi,0
+syscall
